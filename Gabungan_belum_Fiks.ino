@@ -1,36 +1,28 @@
 #include <Wire.h>
+#include <RTClib.h>
 #include <DHT.h>
 #include <Adafruit_INA219.h>
-#include <RTClib.h> 
-
-Adafruit_INA219 sensor219; // Deklarasi INA219
-RTC_DS3231 rtc; // Deklarasi RTC DS3231
-
-// Konstanta
+ 
+// Mendeklarasikan Pin
 #define DHTPIN 13       
 #define DHTTYPE DHT22
-#define SOIL_SENSOR_PIN 14     
+#define SOILPIN 14 
+
+// Menginisiasikan Objek Sensor
+Adafruit_INA219 sensor219; 
+RTC_DS3231 rtc; 
 DHT dht(DHTPIN, DHTTYPE);
-
-
-
-// Variabel
+   
+// Variabel Data Sensor 
 float humiditydht;
 float temperaturedht;
-
-
-// Nilai kalibrasi 
-int minValue = 3200; // Nilai analog ketika tanah kering
-int maxValue = 1500; // Nilai analog ketika tanah basah
-
-
+int soilMoisture;
+float soilMoisturePercent;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   sensor219.begin();
   dht.begin();
-  Wire.begin();
-  pinMode(SOIL_SENSOR_PIN, INPUT);
   
   // Mengatur waktu saat ini
   rtc.adjust(DateTime(__DATE__, __TIME__));
@@ -40,36 +32,31 @@ void setup() {
 
 void loop() {
   // Membaca data dan menyimpannya ke dalam variabel
-  /// Variabel INA219
-  float busVoltage = 0;
-  float current = 0; // Measure in milli amps
-  float power = 0;
+ /// DHT22
+  humiditydht = dht.readHumidity();
+  temperaturedht = dht.readTemperature(); 
+  
+  /// Variabel Soil Moisture
+  soilMoisture = analogRead(SOILPIN);
+  soilMoisturePercent = map(soilMoisture, 260, 520, 100, 0); 
 
+  /// INA219
   busVoltage = sensor219.getBusVoltage_V();
   current = sensor219.getCurrent_mA();
-  power = busVoltage * (current/1000);
-
-  /// Variabel DHT22
-  humiditydht = dht.readHumidity();
-  temperaturedht = dht.readTemperature();
-
-  /// Variabel RTC DS3231
+  
+  /// RTC DS3231
   DateTime now = rtc.now();
 
-  /// Variabel Soil Moisture
-  int soilMoistureValue = analogRead(SOIL_SENSOR_PIN);
-  int soilMoisturePercent = map(soilMoistureValue, minValue, maxValue, 0, 100);
-  soilMoisturePercent = constrain(soilMoisturePercent, 0, 100);
-
+  
   // Menampilkan Hasil
   /// Hasil RTC DS3231
-  Serial.print("Current Date: ");
+  Serial.print("Tanggal: ");
   Serial.print(now.year(), DEC);
   Serial.print("/");
   printTwoDigits(now.month());
   Serial.print("/");
   printTwoDigits(now.day());
-  Serial.print(" Current Time: ");
+  Serial.print(" Waktu: ");
   printTwoDigits(now.hour());
   Serial.print(":");
   printTwoDigits(now.minute());
@@ -78,7 +65,7 @@ void loop() {
   Serial.println();
 
   /// Hasil INA219
-  Serial.print("Bus Voltage:   "); 
+  Serial.print("Voltage:   "); 
   Serial.print(busVoltage); 
   Serial.println(" V");  
   Serial.print("Current:       "); 
@@ -87,7 +74,7 @@ void loop() {
 
   /// Hasil Soil Moisture
   Serial.print("Soil Moisture Value: ");
-  Serial.print(soilMoistureValue);
+  Serial.print(soilMoisture);
   Serial.print(" - Soil Moisture Percentage: ");
   Serial.print(soilMoisturePercent);
   Serial.println("%");
