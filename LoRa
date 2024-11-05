@@ -1,0 +1,46 @@
+#include <SPI.h>
+#include <LoRa.h>
+
+#define ss 4       
+#define rst 14     
+#define dio0 13   
+
+int counter = 0;
+
+void setup() {
+  // Initialize Serial Monitor
+  Serial.begin(115200);
+  while (!Serial);
+  Serial.println("LoRa Sender");
+
+  // Setup LoRa transceiver module
+  LoRa.setPins(ss, rst, dio0);
+  
+  // Replace the LoRa.begin(---E-) argument with your location's frequency 
+  // 433E6 for Asia, 868E6 for Europe, 915E6 for North America
+  while (!LoRa.begin(433E6)) {
+    Serial.print(".");
+    delay(500);
+  }
+
+  // Change sync word to match the receiver
+  // The sync word assures you don't get LoRa messages from other LoRa transceivers
+  // Sync word ranges from 0-0xFF
+  LoRa.setSyncWord(0xF3);
+  Serial.println("LoRa Initializing OK!");
+}
+
+void loop() {
+  Serial.print("Sending packet: ");
+  Serial.println(counter);
+
+  // Send LoRa packet to receiver
+  LoRa.beginPacket();
+  LoRa.print("hello ");
+  LoRa.print(counter);
+  LoRa.endPacket();
+
+  counter++;
+
+  delay(10000); // Wait 10 seconds before sending the next packet
+}
