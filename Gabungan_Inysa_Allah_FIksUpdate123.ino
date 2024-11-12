@@ -60,13 +60,6 @@ void setup() {
 }
 
 
-// Function to print numbers with two digits
-void printTwoDigits(int number) {
-    if (number < 10) {
-        Serial.print("0"); // Add a leading zero for single-digit numbers
-    }
-    Serial.print(number);
-}
 
 void loop() {
   // LoRa
@@ -84,7 +77,13 @@ void loop() {
   // Data RTC DS3231
   DateTime now = rtc.now();
 
-  String timestamp = String(now.day()) + "/" + String(now.month()) + "/" +  String(now.year(), DEC) + " " + String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
+  // Membuat string timestamp dengan sprintf untuk format dua digit
+  char timestamp[20]; // Buffer untuk menyimpan format waktu
+  sprintf(timestamp, "%02d/%02d/%04d %02d:%02d:%02d", 
+          now.day(), now.month(), now.year(), 
+          now.hour(), now.minute(), now.second());
+
+  
 
   // Data Soil Moisture
   soilMoisture = analogRead(SOILPIN);
